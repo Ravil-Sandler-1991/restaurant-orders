@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מערכת הזמנות מסעדה</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
         * {
             margin: 0;
@@ -12,10 +11,17 @@
             box-sizing: border-box;
         }
 
+        html {
+            direction: rtl;
+        }
+
+        html[lang="en"] {
+            direction: ltr;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
             padding: 20px;
         }
 
@@ -24,121 +30,85 @@
             margin: 0 auto;
         }
 
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .language-toggle {
+            display: flex;
+            gap: 10px;
+        }
+
+        .lang-btn {
+            padding: 10px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .lang-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .lang-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
         .header {
             background: white;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 8px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .header h1 {
             color: #333;
-            margin-bottom: 10px;
-        }
-
-        .setup-section {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-right: 4px solid #ffc107;
-        }
-
-        .setup-section h3 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-
-        .setup-inputs {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .setup-inputs input {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .setup-inputs button {
-            padding: 8px 16px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .setup-inputs button:hover {
-            background: #5568d3;
-        }
-
-        .filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 10px 16px;
-            border: 2px solid #ddd;
-            background: white;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .filter-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .filter-btn:hover {
-            border-color: #667eea;
-        }
-
-        .categories {
-            display: grid;
-            gap: 20px;
+            font-size: 28px;
         }
 
         .category {
             background: white;
-            border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .category-title {
             font-size: 20px;
-            font-weight: 700;
+            font-weight: bold;
             color: #333;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 3px solid #667eea;
         }
 
-        .items-grid {
-            display: grid;
-            gap: 15px;
-        }
-
         .item {
             display: grid;
-            grid-template-columns: 1fr auto auto auto;
-            gap: 10px;
-            align-items: center;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 15px;
             padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
+            background: #f9f9f9;
             border-right: 3px solid #667eea;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            align-items: center;
+        }
+
+        html[lang="en"] .item {
+            border-right: none;
+            border-left: 3px solid #667eea;
         }
 
         .item-name {
@@ -146,72 +116,47 @@
             color: #333;
         }
 
-        .quantity-group {
+        .item-row {
             display: flex;
             gap: 8px;
             align-items: center;
         }
 
-        .qty-input {
-            width: 60px;
-            padding: 6px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .qty-label {
-            font-size: 12px;
+        label {
+            font-size: 13px;
             color: #666;
             font-weight: 600;
         }
 
-        .order-group {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .order-input {
+        input {
             width: 70px;
             padding: 6px;
             border: 1px solid #ddd;
             border-radius: 4px;
             text-align: center;
-            font-weight: 600;
-            color: #d32f2f;
+            font-size: 14px;
         }
 
-        .order-btn {
-            padding: 6px 12px;
+        button {
+            padding: 8px 16px;
             background: #4caf50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 13px;
         }
 
-        .order-btn:hover {
+        button:hover {
             background: #45a049;
-        }
-
-        .order-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
         }
 
         .status {
             font-size: 12px;
+            font-weight: 600;
             padding: 4px 8px;
             border-radius: 4px;
-            font-weight: 600;
-        }
-
-        .status.low {
-            background: #ffebee;
-            color: #c62828;
         }
 
         .status.ok {
@@ -219,38 +164,49 @@
             color: #2e7d32;
         }
 
+        .status.low {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
         .status.empty {
-            background: #fce4ec;
-            color: #ad1457;
+            background: #ffebee;
+            color: #c62828;
         }
 
-        .orders-log {
+        .orders-section {
             background: white;
-            border-radius: 12px;
             padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-top: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .orders-log h3 {
+        .orders-section h3 {
             font-size: 18px;
-            font-weight: 700;
-            color: #333;
             margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
+            color: #333;
+        }
+
+        .order-log {
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .order-item {
             padding: 10px;
-            background: #f8f9fa;
+            background: #f9f9f9;
             border-right: 3px solid #4caf50;
-            border-radius: 4px;
             margin-bottom: 8px;
+            border-radius: 4px;
             font-size: 14px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+        }
+
+        html[lang="en"] .order-item {
+            border-right: none;
+            border-left: 3px solid #4caf50;
         }
 
         .order-time {
@@ -258,206 +214,532 @@
             color: #999;
         }
 
-        .demo-notice {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-right: 4px solid #2196f3;
-        }
-
-        .demo-notice h4 {
-            color: #1976d2;
-            margin-bottom: 8px;
-        }
-
-        .demo-notice p {
-            color: #0d47a1;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .demo-notice code {
-            background: white;
-            padding: 8px;
-            border-radius: 4px;
-            display: inline-block;
-            margin: 5px 0;
-            font-family: monospace;
-        }
-
         @media (max-width: 768px) {
             .item {
                 grid-template-columns: 1fr;
-                gap: 8px;
-            }
-
-            .filters {
-                gap: 5px;
-            }
-
-            .filter-btn {
-                padding: 8px 12px;
-                font-size: 13px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>📦 מערכת הזמנות מסעדה - ריאל טיים</h1>
-            <p style="color: #666; margin-top: 5px;">סנכרון חי בין כל העובדים</p>
-        </div>
-
-        <div class="demo-notice">
-            <h4>🚀 כדי להפעיל סנכרון אמיתי:</h4>
-            <p><strong>1. צור חשבון Supabase בחינם:</strong></p>
-            <code>https://supabase.com</code>
-            <p><strong>2. הגדר את ה-API keys כאן:</strong></p>
-            <div class="setup-inputs">
-                <input type="text" id="supabaseUrl" placeholder="Supabase URL" value="">
-                <input type="text" id="supabaseKey" placeholder="Supabase Anon Key" value="">
-                <button onclick="setupSupabase()">חיבור</button>
+        <div class="top-bar">
+            <div></div>
+            <div class="language-toggle">
+                <button class="lang-btn active" onclick="setLanguage('he')">עברית</button>
+                <button class="lang-btn" onclick="setLanguage('en')">English</button>
             </div>
-            <p style="margin-top: 10px; font-size: 12px;">בינתיים - בואו נעבוד עם localStorage (סנכרון בתוך המכשיר בלבד)</p>
         </div>
 
-        <div class="filters" id="filters"></div>
+        <div class="header">
+            <h1 data-he="📦 מערכת הזמנות מסעדה" data-en="📦 Restaurant Orders System">📦 מערכת הזמנות מסעדה</h1>
+            <p style="color: #666; margin-top: 5px;" data-he="סנכרון מקומי - כל השינויים נשמרים באופן אוטומטי" data-en="Local sync - All changes are saved automatically">סנכרון מקומי - כל השינויים נשמרים באופן אוטומטי</p>
+        </div>
 
-        <div class="categories" id="categories"></div>
+        <div id="categories"></div>
 
-        <div class="orders-log">
-            <h3>📋 רישום הזמנות אחרונות</h3>
-            <div id="ordersList" style="max-height: 400px; overflow-y: auto;"></div>
+        <div class="orders-section">
+            <h3 data-he="📋 רישום הזמנות אחרונות" data-en="📋 Recent Orders Log">📋 רישום הזמנות אחרונות</h3>
+            <div class="order-log" id="ordersList">
+                <p style="color: #999;" data-he="אין הזמנות עדיין" data-en="No orders yet">אין הזמנות עדיין</p>
+            </div>
         </div>
     </div>
 
     <script>
-        // Inventory data structured by category
+        const translations = {
+            'Vegetables & Herbs': {
+                he: 'ירקות ועשבי תיבול',
+                en: 'Vegetables & Herbs'
+            },
+            'Caesar Hearts': {
+                he: 'לבבות קיסר',
+                en: 'Caesar Hearts'
+            },
+            'Cherry Tomatoes': {
+                he: 'עגבניות שרי',
+                en: 'Cherry Tomatoes'
+            },
+            'Sauce Tomatoes': {
+                he: 'עגבניות לרוטב',
+                en: 'Sauce Tomatoes'
+            },
+            'Red Onion': {
+                he: 'בצל סגול',
+                en: 'Red Onion'
+            },
+            'Fresh Garlic': {
+                he: 'שום טרי',
+                en: 'Fresh Garlic'
+            },
+            'Garlic Confit': {
+                he: 'שום קונפי',
+                en: 'Garlic Confit'
+            },
+            'Basil': {
+                he: 'בזיליקום',
+                en: 'Basil'
+            },
+            'Arugula': {
+                he: 'רוקט',
+                en: 'Arugula'
+            },
+            'Parsley': {
+                he: 'פטרוזיליה',
+                en: 'Parsley'
+            },
+            'Red Chili': {
+                he: 'צ\'ילי אדום',
+                en: 'Red Chili'
+            },
+            'Jalapeño': {
+                he: 'חלפיניו',
+                en: 'Jalapeño'
+            },
+            'Lemons': {
+                he: 'לימונים',
+                en: 'Lemons'
+            },
+            'Antipasti & Toppings': {
+                he: 'אנטיפסטי ותוספות',
+                en: 'Antipasti & Toppings'
+            },
+            'Artichoke alla Romana': {
+                he: 'ארטישוק א-לה רומאנה',
+                en: 'Artichoke alla Romana'
+            },
+            'Kalamata Olives': {
+                he: 'זיתי קלמטה',
+                en: 'Kalamata Olives'
+            },
+            'Croutons': {
+                he: 'קרוטונים',
+                en: 'Croutons'
+            },
+            'Focaccia': {
+                he: 'פוקצ\'ה',
+                en: 'Focaccia'
+            },
+            'Cheeses': {
+                he: 'גבינות',
+                en: 'Cheeses'
+            },
+            'Fresh Mozzarella': {
+                he: 'מוצרלה פרסקה',
+                en: 'Fresh Mozzarella'
+            },
+            'Burrata': {
+                he: 'בוראטה',
+                en: 'Burrata'
+            },
+            'Parmigiano Reggiano': {
+                he: 'פרמז\'ן רג\'אנו',
+                en: 'Parmigiano Reggiano'
+            },
+            'Ricotta': {
+                he: 'ריקוטה',
+                en: 'Ricotta'
+            },
+            'Mascarpone': {
+                he: 'מסקרפונה',
+                en: 'Mascarpone'
+            },
+            'Mushrooms': {
+                he: 'פטריות',
+                en: 'Mushrooms'
+            },
+            'Champignon': {
+                he: 'שמפיניון',
+                en: 'Champignon'
+            },
+            'Portobello': {
+                he: 'פורטובלו',
+                en: 'Portobello'
+            },
+            'Pastas': {
+                he: 'פסטות',
+                en: 'Pastas'
+            },
+            'Spaghetti': {
+                he: 'ספגטי',
+                en: 'Spaghetti'
+            },
+            'Fettuccine': {
+                he: 'פטוצ\'יני',
+                en: 'Fettuccine'
+            },
+            'Rigatoni': {
+                he: 'ריגטוני',
+                en: 'Rigatoni'
+            },
+            'Busiate': {
+                he: 'בוסיאטה',
+                en: 'Busiate'
+            },
+            'Radiatore': {
+                he: 'רדיאטורה',
+                en: 'Radiatore'
+            },
+            'Gnocchi': {
+                he: 'ניוקי',
+                en: 'Gnocchi'
+            },
+            'Ravioli Beets Mascarpone': {
+                he: 'אנילוטי סלק ומסקרפונה',
+                en: 'Ravioli Beets Mascarpone'
+            },
+            'Ravioli Mushrooms Ricotta': {
+                he: 'אנילוטי פטריות וריקוטה',
+                en: 'Ravioli Mushrooms Ricotta'
+            },
+            'Gluten-Free Pasta': {
+                he: 'פסטה ללא גלוטן',
+                en: 'Gluten-Free Pasta'
+            },
+            'Sauces': {
+                he: 'רטבים',
+                en: 'Sauces'
+            },
+            'Napoli': {
+                he: 'נפולי',
+                en: 'Napoli'
+            },
+            'Cream': {
+                he: 'שמנת',
+                en: 'Cream'
+            },
+            'Rosa': {
+                he: 'רוזה',
+                en: 'Rosa'
+            },
+            'Arbiata': {
+                he: 'ארביאטה',
+                en: 'Arbiata'
+            },
+            'Truffle': {
+                he: 'טרטופו',
+                en: 'Truffle'
+            },
+            'Pesto Cream': {
+                he: 'שמנת פסטו',
+                en: 'Pesto Cream'
+            },
+            'Butter Za\'atar Pine Nuts': {
+                he: 'חמאה, זעתר וערמונים',
+                en: 'Butter Za\'atar Pine Nuts'
+            },
+            'Pizza': {
+                he: 'פיצה',
+                en: 'Pizza'
+            },
+            'Dough Balls': {
+                he: 'כדורי בצק',
+                en: 'Dough Balls'
+            },
+            'Pizza Tomato Sauce': {
+                he: 'רוטב עגבניות לפיצה',
+                en: 'Pizza Tomato Sauce'
+            },
+            'Pizza Mozzarella': {
+                he: 'מוצרלה לפיצה',
+                en: 'Pizza Mozzarella'
+            },
+            'Pizza Parmesan': {
+                he: 'פרמז\'ן לפיצה',
+                en: 'Pizza Parmesan'
+            },
+            'Pantry Items': {
+                he: 'מוצרי מזווה',
+                en: 'Pantry Items'
+            },
+            'Olive Oil': {
+                he: 'שמן זית',
+                en: 'Olive Oil'
+            },
+            'Salt': {
+                he: 'מלח',
+                en: 'Salt'
+            },
+            'Black Pepper': {
+                he: 'פלפל שחור',
+                en: 'Black Pepper'
+            },
+            'Dried Oregano': {
+                he: 'אורגנו יבש',
+                en: 'Dried Oregano'
+            },
+            'Chili Flakes': {
+                he: 'פתיתי צ\'ילי',
+                en: 'Chili Flakes'
+            },
+            'Nutmeg': {
+                he: 'אגוז מוסקט',
+                en: 'Nutmeg'
+            },
+            'Cumin': {
+                he: 'כמהין',
+                en: 'Cumin'
+            },
+            'Prep': {
+                he: 'הכנות (Prep)',
+                en: 'Prep'
+            },
+            'Ready Napoli': {
+                he: 'רוטב נפולי מוכן',
+                en: 'Ready Napoli'
+            },
+            'Ready Cream Sauce': {
+                he: 'רוטב שמנת מוכן',
+                en: 'Ready Cream Sauce'
+            },
+            'Ready Rosa': {
+                he: 'רוטב רוזה מוכן',
+                en: 'Ready Rosa'
+            },
+            'Ready Arbiata': {
+                he: 'רוטב ארביאטה מוכן',
+                en: 'Ready Arbiata'
+            },
+            'Ready Truffle': {
+                he: 'רוטב טרטופו מוכן',
+                en: 'Ready Truffle'
+            },
+            'Ready Pesto Cream': {
+                he: 'שמנת פסטו מוכנה',
+                en: 'Ready Pesto Cream'
+            },
+            'Ready Butter & Arugula': {
+                he: 'חמאה וערמונים מוכנים',
+                en: 'Ready Butter & Arugula'
+            },
+            'Ready Garlic Confit': {
+                he: 'שום קונפי מוכן',
+                en: 'Ready Garlic Confit'
+            },
+            'Grated Parmesan': {
+                he: 'פרמז\'ן מגורר',
+                en: 'Grated Parmesan'
+            },
+            'Sliced Mozzarella': {
+                he: 'מוצרלה חתוכה',
+                en: 'Sliced Mozzarella'
+            },
+            'Ready Burrata': {
+                he: 'בוראטה מוכנה',
+                en: 'Ready Burrata'
+            },
+            'Washed Vegetables': {
+                he: 'ירקות חתוכים',
+                en: 'Washed Vegetables'
+            },
+            'Dried Lettuce': {
+                he: 'חסה יבשה',
+                en: 'Dried Lettuce'
+            },
+            'Equipment': {
+                he: 'ציוד',
+                en: 'Equipment'
+            },
+            'Takeaway Boxes': {
+                he: 'קופסאות טייק-אווי',
+                en: 'Takeaway Boxes'
+            },
+            'Lids': {
+                he: 'מכסים',
+                en: 'Lids'
+            },
+            'Cutlery': {
+                he: 'סכו"ם',
+                en: 'Cutlery'
+            },
+            'Napkins': {
+                he: 'מפיות',
+                en: 'Napkins'
+            },
+            'Delivery Bags': {
+                he: 'שקיות משלוח',
+                en: 'Delivery Bags'
+            },
+            'Stickers': {
+                he: 'מדבקות',
+                en: 'Stickers'
+            },
+            'Gloves': {
+                he: 'כפפות',
+                en: 'Gloves'
+            },
+            'Plastic Wrap': {
+                he: 'ניילון נצמד',
+                en: 'Plastic Wrap'
+            },
+            'Baking Paper': {
+                he: 'נייר אפייה',
+                en: 'Baking Paper'
+            },
+            'In Stock': {
+                he: '✓ בסדר',
+                en: '✓ OK'
+            },
+            'Low': {
+                he: '⚠️ נמוך',
+                en: '⚠️ Low'
+            },
+            'Out': {
+                he: '⚠️ נגמר',
+                en: '⚠️ Out'
+            },
+            'In Stock': {
+                he: 'בעמדה:',
+                en: 'In Stock:'
+            },
+            'Order Qty': {
+                he: 'הזמנה:',
+                en: 'Order Qty:'
+            },
+            'Order': {
+                he: 'הזמן',
+                en: 'Order'
+            },
+            'Ordered': {
+                he: 'הוזמן:',
+                en: 'Ordered:'
+            }
+        };
+
         const inventory = {
-            'ירקות ועשבי תיבול': [
-                'לבבות קיסר',
-                'עגבניות שרי',
-                'עגבניות לרוטב',
-                'בצל סגול',
-                'שום טרי',
-                'שום קונפי',
-                'בזיליקום',
-                'רוקט',
-                'פטרוזיליה',
-                'צ\'ילי אדום',
-                'חלפיניו',
-                'לימונים'
+            'Vegetables & Herbs': [
+                'Caesar Hearts',
+                'Cherry Tomatoes',
+                'Sauce Tomatoes',
+                'Red Onion',
+                'Fresh Garlic',
+                'Garlic Confit',
+                'Basil',
+                'Arugula',
+                'Parsley',
+                'Red Chili',
+                'Jalapeño',
+                'Lemons'
             ],
-            'אנטיפסטי ותוספות': [
-                'ארטישוק א-לה רומאנה',
-                'זיתי קלמטה',
-                'קרוטונים',
-                'פוקצ\'ה'
+            'Antipasti & Toppings': [
+                'Artichoke alla Romana',
+                'Kalamata Olives',
+                'Croutons',
+                'Focaccia'
             ],
-            'גבינות': [
-                'מוצרלה פרסקה',
-                'בוראטה',
-                'פרמז\'ן רג\'אנו',
-                'ריקוטה',
-                'מסקרפונה'
+            'Cheeses': [
+                'Fresh Mozzarella',
+                'Burrata',
+                'Parmigiano Reggiano',
+                'Ricotta',
+                'Mascarpone'
             ],
-            'פטריות': [
-                'שמפיניון',
-                'פורטובלו'
+            'Mushrooms': [
+                'Champignon',
+                'Portobello'
             ],
-            'פסטות': [
-                'ספגטי',
-                'פטוצ\'יני',
-                'ריגטוני',
-                'בוסיאטה',
-                'רדיאטורה',
-                'ניוקי',
-                'אנילוטי סלק ומסקרפונה',
-                'אנילוטי פטריות וריקוטה',
-                'פסטה ללא גלוטן'
+            'Pastas': [
+                'Spaghetti',
+                'Fettuccine',
+                'Rigatoni',
+                'Busiate',
+                'Radiatore',
+                'Gnocchi',
+                'Ravioli Beets Mascarpone',
+                'Ravioli Mushrooms Ricotta',
+                'Gluten-Free Pasta'
             ],
-            'רטבים': [
-                'נפולי',
-                'שמנת',
-                'רוזה',
-                'ארביאטה',
-                'טרטופו',
-                'שמנת פסטו',
-                'חמאה, זעתר וערמונים'
+            'Sauces': [
+                'Napoli',
+                'Cream',
+                'Rosa',
+                'Arbiata',
+                'Truffle',
+                'Pesto Cream',
+                'Butter Za\'atar Pine Nuts'
             ],
-            'פיצה': [
-                'כדורי בצק',
-                'רוטב עגבניות לפיצה',
-                'מוצרלה לפיצה',
-                'פרמז\'ן לפיצה'
+            'Pizza': [
+                'Dough Balls',
+                'Pizza Tomato Sauce',
+                'Pizza Mozzarella',
+                'Pizza Parmesan'
             ],
-            'מוצרי מזווה': [
-                'שמן זית',
-                'מלח',
-                'פלפל שחור',
-                'אורגנו יבש',
-                'פתיתי צ\'ילי',
-                'אגוז מוסקט',
-                'כמהין / מחית כמהין'
+            'Pantry Items': [
+                'Olive Oil',
+                'Salt',
+                'Black Pepper',
+                'Dried Oregano',
+                'Chili Flakes',
+                'Nutmeg',
+                'Cumin'
             ],
-            'הכנות (Prep)': [
-                'רוטב נפולי מוכן',
-                'רוטב שמנת מוכן',
-                'רוטב רוזה מוכן',
-                'רוטב ארביאטה מוכן',
-                'רוטב טרטופו מוכן',
-                'שמנת פסטו מוכנה',
-                'חמאה, זעתר וערמונים מוכנים',
-                'שום קונפי מוכן',
-                'פרמז\'ן מגורר',
-                'מוצרלה חתוכה',
-                'בוראטה מוכנה להגשה',
-                'ירקות שטופים וחתוכים',
-                'חסה שטופה ויבשה',
-                'פוקצ\'ות מוכנות',
-                'קרוטונים מוכנים'
+            'Prep': [
+                'Ready Napoli',
+                'Ready Cream Sauce',
+                'Ready Rosa',
+                'Ready Arbiata',
+                'Ready Truffle',
+                'Ready Pesto Cream',
+                'Ready Butter & Arugula',
+                'Ready Garlic Confit',
+                'Grated Parmesan',
+                'Sliced Mozzarella',
+                'Ready Burrata',
+                'Washed Vegetables',
+                'Dried Lettuce'
             ],
-            'ציוד': [
-                'קופסאות טייק־אווי',
-                'מכסים',
-                'סכו"ם',
-                'מפיות',
-                'שקיות משלוח',
-                'מדבקות',
-                'כפפות',
-                'ניילון נצמד',
-                'נייר אפייה'
+            'Equipment': [
+                'Takeaway Boxes',
+                'Lids',
+                'Cutlery',
+                'Napkins',
+                'Delivery Bags',
+                'Stickers',
+                'Gloves',
+                'Plastic Wrap',
+                'Baking Paper'
             ]
         };
 
-        let supabase = null;
         let items = {};
-        let activeFilter = 'הכל';
-        let realtimeSubscription = null;
+        let currentLang = 'he';
 
-        // Initialize
-        function init() {
-            loadFromStorage();
-            renderUI();
-            setupEventListeners();
+        function translate(key) {
+            if (translations[key]) {
+                return translations[key][currentLang] || key;
+            }
+            return key;
         }
 
-        // Storage functions
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+            
+            // Update language buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            render();
+        }
+
+        function init() {
+            loadFromStorage();
+            render();
+        }
+
         function loadFromStorage() {
             const stored = localStorage.getItem('restaurantInventory');
             if (stored) {
                 items = JSON.parse(stored);
             } else {
-                // Initialize all items
                 for (const [category, itemList] of Object.entries(inventory)) {
                     for (const item of itemList) {
                         items[item] = {
                             category,
-                            current: 0,
-                            unit: 'יח\'',
-                            lastOrdered: null
+                            current: 0
                         };
                     }
                 }
@@ -469,224 +751,110 @@
             localStorage.setItem('restaurantInventory', JSON.stringify(items));
         }
 
-        // Supabase setup
-        async function setupSupabase() {
-            const url = document.getElementById('supabaseUrl').value.trim();
-            const key = document.getElementById('supabaseKey').value.trim();
-
-            if (!url || !key) {
-                alert('אנא הזן את URL ו-API Key של Supabase');
-                return;
-            }
-
-            try {
-                supabase = window.supabase.createClient(url, key);
-                
-                // Test connection
-                const { data, error } = await supabase.from('restaurant_items').select('*').limit(1);
-                
-                if (error && error.code === 'PGRST116') {
-                    // Table doesn't exist yet
-                    alert('יש ליצור טבלה ב-Supabase.\n\nהוסף את ה-SQL הבא:\n\nCREATE TABLE restaurant_items (\n  id SERIAL PRIMARY KEY,\n  name TEXT UNIQUE,\n  category TEXT,\n  current INTEGER DEFAULT 0,\n  unit TEXT DEFAULT \'יח\\\"\',\n  updated_at TIMESTAMP DEFAULT NOW(),\n  updated_by TEXT\n);');
-                    return;
-                } else if (error) {
-                    throw error;
-                }
-
-                alert('✅ חיבור הצליח! עכשיו הנתונים שלך מסונכרנים בשרת');
-                document.querySelector('.demo-notice').style.display = 'none';
-                
-                // Load from Supabase
-                await loadFromSupabase();
-                setupRealtimeSync();
-            } catch (error) {
-                alert('❌ שגיאה בחיבור: ' + error.message);
-            }
-        }
-
-        async function loadFromSupabase() {
-            const { data, error } = await supabase.from('restaurant_items').select('*');
-            if (error) {
-                console.error('Error loading:', error);
-                return;
-            }
-
-            data.forEach(row => {
-                items[row.name] = {
-                    category: row.category,
-                    current: row.current,
-                    unit: row.unit,
-                    lastOrdered: row.updated_at
-                };
-            });
-            renderUI();
-        }
-
-        function setupRealtimeSync() {
-            if (realtimeSubscription) {
-                supabase.removeSubscription(realtimeSubscription);
-            }
-
-            realtimeSubscription = supabase
-                .from('restaurant_items')
-                .on('*', payload => {
-                    if (payload.eventType === 'UPDATE') {
-                        const updated = payload.new;
-                        items[updated.name].current = updated.current;
-                        renderUI();
-                        addOrderLog(`${updated.name} עודכן ל-${updated.current} (סנכרון בשרת)`);
-                    }
-                })
-                .subscribe();
-        }
-
-        // Update quantity
-        async function updateQuantity(itemName, value) {
+        function updateQuantity(itemName, value) {
             items[itemName].current = parseInt(value) || 0;
             saveToStorage();
-
-            if (supabase) {
-                const { error } = await supabase
-                    .from('restaurant_items')
-                    .upsert({
-                        name: itemName,
-                        category: items[itemName].category,
-                        current: items[itemName].current,
-                        unit: items[itemName].unit,
-                        updated_by: 'עובד'
-                    });
-                if (error) console.error('Update error:', error);
-            }
-
-            renderUI();
+            render();
         }
 
-        // Place order
-        async function placeOrder(itemName, quantity) {
-            const newQty = items[itemName].current - quantity;
+        function placeOrder(itemName, quantity) {
+            const qty = parseInt(quantity) || 1;
+            const newQty = items[itemName].current - qty;
+            
             if (newQty < 0) {
-                alert(`אין מספיק ${itemName}`);
+                alert(currentLang === 'he' ? `אין מספיק ${itemName}` : `Not enough ${itemName}`);
                 return;
             }
 
             items[itemName].current = newQty;
-            items[itemName].lastOrdered = new Date().toISOString();
             saveToStorage();
-
-            if (supabase) {
-                const { error } = await supabase
-                    .from('restaurant_items')
-                    .upsert({
-                        name: itemName,
-                        category: items[itemName].category,
-                        current: newQty,
-                        unit: items[itemName].unit,
-                        updated_by: 'הזמנה'
-                    });
-                if (error) console.error('Order error:', error);
-            }
-
-            addOrderLog(`הוזמן: ${quantity} ${items[itemName].unit} של ${itemName}`);
+            
+            const message = currentLang === 'he' 
+                ? `הוזמן: ${qty} של ${itemName}` 
+                : `Ordered: ${qty} of ${itemName}`;
+            addOrderLog(message);
+            
             document.querySelector(`input[data-order-${itemName}]`).value = '1';
-            renderUI();
+            render();
         }
 
-        // Order log
         function addOrderLog(message) {
             const logs = JSON.parse(localStorage.getItem('orderLogs')) || [];
             logs.unshift({
-                time: new Date().toLocaleTimeString('he-IL'),
+                time: new Date().toLocaleTimeString(currentLang === 'he' ? 'he-IL' : 'en-US'),
                 message: message
             });
-            logs.splice(50); // Keep last 50
+            logs.splice(50);
             localStorage.setItem('orderLogs', JSON.stringify(logs));
-            renderOrderLog();
+            render();
         }
 
-        function renderOrderLog() {
-            const logs = JSON.parse(localStorage.getItem('orderLogs')) || [];
-            const html = logs.map(log => 
-                `<div class="order-item">
-                    <span>${log.message}</span>
-                    <span class="order-time">${log.time}</span>
-                </div>`
-            ).join('');
-            document.getElementById('ordersList').innerHTML = html || '<p style="color: #999;">אין הזמנות עדיין</p>';
-        }
-
-        // UI Rendering
-        function renderUI() {
-            renderFilters();
+        function render() {
             renderCategories();
             renderOrderLog();
         }
 
-        function renderFilters() {
-            const categories = ['הכל', ...Object.keys(inventory)];
-            const html = categories.map(cat => 
-                `<button class="filter-btn ${activeFilter === cat ? 'active' : ''}" onclick="setFilter('${cat}')">${cat}</button>`
-            ).join('');
-            document.getElementById('filters').innerHTML = html;
-        }
-
         function renderCategories() {
             let html = '';
+            
             for (const [category, itemList] of Object.entries(inventory)) {
-                if (activeFilter !== 'הכל' && activeFilter !== category) continue;
-
-                html += `<div class="category">
-                    <div class="category-title">${category}</div>
-                    <div class="items-grid">`;
+                html += `
+                    <div class="category">
+                        <div class="category-title">${translate(category)}</div>
+                `;
 
                 for (const itemName of itemList) {
                     const item = items[itemName];
                     const current = item.current;
                     let status = 'ok';
+                    
                     if (current === 0) status = 'empty';
                     else if (current < 5) status = 'low';
 
-                    html += `<div class="item">
-                        <div class="item-name">${itemName}</div>
-                        <div class="quantity-group">
-                            <span class="qty-label">בעמדה:</span>
-                            <input type="number" class="qty-input" value="${current}" min="0" 
-                                   onchange="updateQuantity('${itemName}', this.value)">
+                    const statusMap = {
+                        'ok': translate('In Stock'),
+                        'low': translate('Low'),
+                        'empty': translate('Out')
+                    };
+
+                    html += `
+                        <div class="item">
+                            <div class="item-name">${translate(itemName)}</div>
+                            <div class="item-row">
+                                <label>${translate('In Stock')}:</label>
+                                <input type="number" value="${current}" min="0" 
+                                       onchange="updateQuantity('${itemName}', this.value)">
+                            </div>
+                            <div class="item-row">
+                                <label>${translate('Order Qty')}:</label>
+                                <input type="number" value="1" min="1" data-order-${itemName}>
+                                <button onclick="placeOrder('${itemName}', document.querySelector('input[data-order-${itemName}]').value)">${translate('Order')}</button>
+                            </div>
+                            <div class="status ${status}">${statusMap[status]}</div>
                         </div>
-                        <div class="order-group">
-                            <span class="qty-label">הזמנה:</span>
-                            <input type="number" class="qty-input order-input" value="1" min="1" data-order-${itemName}>
-                            <button class="order-btn" onclick="placeOrder('${itemName}', parseInt(document.querySelector('input[data-order-${itemName}]').value))">הזמן</button>
-                        </div>
-                        <div class="status ${status}">
-                            ${status === 'empty' ? '⚠️ נגמר' : status === 'low' ? '⚠️ נמוך' : '✓ בסדר'}
-                        </div>
-                    </div>`;
+                    `;
                 }
 
-                html += `</div></div>`;
+                html += `</div>`;
             }
+
             document.getElementById('categories').innerHTML = html;
         }
 
-        function setFilter(category) {
-            activeFilter = category;
-            renderUI();
+        function renderOrderLog() {
+            const logs = JSON.parse(localStorage.getItem('orderLogs')) || [];
+            const html = logs.length > 0 
+                ? logs.map(log => `
+                    <div class="order-item">
+                        <span>${log.message}</span>
+                        <span class="order-time">${log.time}</span>
+                    </div>
+                `).join('')
+                : `<p style="color: #999;">${currentLang === 'he' ? 'אין הזמנות עדיין' : 'No orders yet'}</p>`;
+            
+            document.getElementById('ordersList').innerHTML = html;
         }
 
-        function setupEventListeners() {
-            // Allow real-time input
-            document.addEventListener('input', (e) => {
-                if (e.target.classList.contains('qty-input')) {
-                    // Auto-save
-                    clearTimeout(window.autoSaveTimeout);
-                    window.autoSaveTimeout = setTimeout(() => {
-                        saveToStorage();
-                    }, 500);
-                }
-            });
-        }
-
-        // Start
         init();
     </script>
 </body>
