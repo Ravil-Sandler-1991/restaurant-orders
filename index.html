@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מערכת הזמנות מסעדה</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.0"></script>
     <style>
         * {
             margin: 0;
@@ -59,11 +60,6 @@
             color: white;
         }
 
-        .lang-btn:hover {
-            background: #667eea;
-            color: white;
-        }
-
         .header {
             background: white;
             padding: 20px;
@@ -75,6 +71,21 @@
         .header h1 {
             color: #333;
             font-size: 28px;
+        }
+
+        .status-bar {
+            background: #e8f5e9;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #2e7d32;
+            font-weight: 600;
+        }
+
+        .status-bar.error {
+            background: #ffebee;
+            color: #c62828;
         }
 
         .category {
@@ -126,6 +137,7 @@
             font-size: 13px;
             color: #666;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         input {
@@ -233,7 +245,8 @@
 
         <div class="header">
             <h1 data-he="📦 מערכת הזמנות מסעדה" data-en="📦 Restaurant Orders System">📦 מערכת הזמנות מסעדה</h1>
-            <p style="color: #666; margin-top: 5px;" data-he="סנכרון מקומי - כל השינויים נשמרים באופן אוטומטי" data-en="Local sync - All changes are saved automatically">סנכרון מקומי - כל השינויים נשמרים באופן אוטומטי</p>
+            <p style="color: #666; margin-top: 5px;" data-he="סנכרון אמיתי - כל השינויים מופיעים בזמן אמת לכל העובדים" data-en="Real-time sync - All changes appear instantly to all workers">סנכרון אמיתי - כל השינויים מופיעים בזמן אמת לכל העובדים</p>
+            <div class="status-bar" id="statusBar" data-he="✅ מחובר לשרת" data-en="✅ Connected to server">✅ מחובר לשרת</div>
         </div>
 
         <div id="categories"></div>
@@ -247,517 +260,193 @@
     </div>
 
     <script>
+        // === PASTE YOUR KEYS HERE ===
+        const SUPABASE_URL = 'https://wyynnrzsccslbuuhussx.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_HWZu_t5khnsO6wPwhOwxyA_PCu0lGjE';
+        // ============================
+
         const translations = {
-            'Vegetables & Herbs': {
-                he: 'ירקות ועשבי תיבול',
-                en: 'Vegetables & Herbs'
-            },
-            'Caesar Hearts': {
-                he: 'לבבות קיסר',
-                en: 'Caesar Hearts'
-            },
-            'Cherry Tomatoes': {
-                he: 'עגבניות שרי',
-                en: 'Cherry Tomatoes'
-            },
-            'Sauce Tomatoes': {
-                he: 'עגבניות לרוטב',
-                en: 'Sauce Tomatoes'
-            },
-            'Red Onion': {
-                he: 'בצל סגול',
-                en: 'Red Onion'
-            },
-            'Fresh Garlic': {
-                he: 'שום טרי',
-                en: 'Fresh Garlic'
-            },
-            'Garlic Confit': {
-                he: 'שום קונפי',
-                en: 'Garlic Confit'
-            },
-            'Basil': {
-                he: 'בזיליקום',
-                en: 'Basil'
-            },
-            'Arugula': {
-                he: 'רוקט',
-                en: 'Arugula'
-            },
-            'Parsley': {
-                he: 'פטרוזיליה',
-                en: 'Parsley'
-            },
-            'Red Chili': {
-                he: 'צ\'ילי אדום',
-                en: 'Red Chili'
-            },
-            'Jalapeño': {
-                he: 'חלפיניו',
-                en: 'Jalapeño'
-            },
-            'Lemons': {
-                he: 'לימונים',
-                en: 'Lemons'
-            },
-            'Antipasti & Toppings': {
-                he: 'אנטיפסטי ותוספות',
-                en: 'Antipasti & Toppings'
-            },
-            'Artichoke alla Romana': {
-                he: 'ארטישוק א-לה רומאנה',
-                en: 'Artichoke alla Romana'
-            },
-            'Kalamata Olives': {
-                he: 'זיתי קלמטה',
-                en: 'Kalamata Olives'
-            },
-            'Croutons': {
-                he: 'קרוטונים',
-                en: 'Croutons'
-            },
-            'Focaccia': {
-                he: 'פוקצ\'ה',
-                en: 'Focaccia'
-            },
-            'Cheeses': {
-                he: 'גבינות',
-                en: 'Cheeses'
-            },
-            'Fresh Mozzarella': {
-                he: 'מוצרלה פרסקה',
-                en: 'Fresh Mozzarella'
-            },
-            'Burrata': {
-                he: 'בוראטה',
-                en: 'Burrata'
-            },
-            'Parmigiano Reggiano': {
-                he: 'פרמז\'ן רג\'אנו',
-                en: 'Parmigiano Reggiano'
-            },
-            'Ricotta': {
-                he: 'ריקוטה',
-                en: 'Ricotta'
-            },
-            'Mascarpone': {
-                he: 'מסקרפונה',
-                en: 'Mascarpone'
-            },
-            'Mushrooms': {
-                he: 'פטריות',
-                en: 'Mushrooms'
-            },
-            'Champignon': {
-                he: 'שמפיניון',
-                en: 'Champignon'
-            },
-            'Portobello': {
-                he: 'פורטובלו',
-                en: 'Portobello'
-            },
-            'Pastas': {
-                he: 'פסטות',
-                en: 'Pastas'
-            },
-            'Spaghetti': {
-                he: 'ספגטי',
-                en: 'Spaghetti'
-            },
-            'Fettuccine': {
-                he: 'פטוצ\'יני',
-                en: 'Fettuccine'
-            },
-            'Rigatoni': {
-                he: 'ריגטוני',
-                en: 'Rigatoni'
-            },
-            'Busiate': {
-                he: 'בוסיאטה',
-                en: 'Busiate'
-            },
-            'Radiatore': {
-                he: 'רדיאטורה',
-                en: 'Radiatore'
-            },
-            'Gnocchi': {
-                he: 'ניוקי',
-                en: 'Gnocchi'
-            },
-            'Ravioli Beets Mascarpone': {
-                he: 'אנילוטי סלק ומסקרפונה',
-                en: 'Ravioli Beets Mascarpone'
-            },
-            'Ravioli Mushrooms Ricotta': {
-                he: 'אנילוטי פטריות וריקוטה',
-                en: 'Ravioli Mushrooms Ricotta'
-            },
-            'Gluten-Free Pasta': {
-                he: 'פסטה ללא גלוטן',
-                en: 'Gluten-Free Pasta'
-            },
-            'Sauces': {
-                he: 'רטבים',
-                en: 'Sauces'
-            },
-            'Napoli': {
-                he: 'נפולי',
-                en: 'Napoli'
-            },
-            'Cream': {
-                he: 'שמנת',
-                en: 'Cream'
-            },
-            'Rosa': {
-                he: 'רוזה',
-                en: 'Rosa'
-            },
-            'Arbiata': {
-                he: 'ארביאטה',
-                en: 'Arbiata'
-            },
-            'Truffle': {
-                he: 'טרטופו',
-                en: 'Truffle'
-            },
-            'Pesto Cream': {
-                he: 'שמנת פסטו',
-                en: 'Pesto Cream'
-            },
-            'Butter Za\'atar Pine Nuts': {
-                he: 'חמאה, זעתר וערמונים',
-                en: 'Butter Za\'atar Pine Nuts'
-            },
-            'Pizza': {
-                he: 'פיצה',
-                en: 'Pizza'
-            },
-            'Dough Balls': {
-                he: 'כדורי בצק',
-                en: 'Dough Balls'
-            },
-            'Pizza Tomato Sauce': {
-                he: 'רוטב עגבניות לפיצה',
-                en: 'Pizza Tomato Sauce'
-            },
-            'Pizza Mozzarella': {
-                he: 'מוצרלה לפיצה',
-                en: 'Pizza Mozzarella'
-            },
-            'Pizza Parmesan': {
-                he: 'פרמז\'ן לפיצה',
-                en: 'Pizza Parmesan'
-            },
-            'Pantry Items': {
-                he: 'מוצרי מזווה',
-                en: 'Pantry Items'
-            },
-            'Olive Oil': {
-                he: 'שמן זית',
-                en: 'Olive Oil'
-            },
-            'Salt': {
-                he: 'מלח',
-                en: 'Salt'
-            },
-            'Black Pepper': {
-                he: 'פלפל שחור',
-                en: 'Black Pepper'
-            },
-            'Dried Oregano': {
-                he: 'אורגנו יבש',
-                en: 'Dried Oregano'
-            },
-            'Chili Flakes': {
-                he: 'פתיתי צ\'ילי',
-                en: 'Chili Flakes'
-            },
-            'Nutmeg': {
-                he: 'אגוז מוסקט',
-                en: 'Nutmeg'
-            },
-            'Cumin': {
-                he: 'כמהין',
-                en: 'Cumin'
-            },
-            'Prep': {
-                he: 'הכנות (Prep)',
-                en: 'Prep'
-            },
-            'Ready Napoli': {
-                he: 'רוטב נפולי מוכן',
-                en: 'Ready Napoli'
-            },
-            'Ready Cream Sauce': {
-                he: 'רוטב שמנת מוכן',
-                en: 'Ready Cream Sauce'
-            },
-            'Ready Rosa': {
-                he: 'רוטב רוזה מוכן',
-                en: 'Ready Rosa'
-            },
-            'Ready Arbiata': {
-                he: 'רוטב ארביאטה מוכן',
-                en: 'Ready Arbiata'
-            },
-            'Ready Truffle': {
-                he: 'רוטב טרטופו מוכן',
-                en: 'Ready Truffle'
-            },
-            'Ready Pesto Cream': {
-                he: 'שמנת פסטו מוכנה',
-                en: 'Ready Pesto Cream'
-            },
-            'Ready Butter & Arugula': {
-                he: 'חמאה וערמונים מוכנים',
-                en: 'Ready Butter & Arugula'
-            },
-            'Ready Garlic Confit': {
-                he: 'שום קונפי מוכן',
-                en: 'Ready Garlic Confit'
-            },
-            'Grated Parmesan': {
-                he: 'פרמז\'ן מגורר',
-                en: 'Grated Parmesan'
-            },
-            'Sliced Mozzarella': {
-                he: 'מוצרלה חתוכה',
-                en: 'Sliced Mozzarella'
-            },
-            'Ready Burrata': {
-                he: 'בוראטה מוכנה',
-                en: 'Ready Burrata'
-            },
-            'Washed Vegetables': {
-                he: 'ירקות חתוכים',
-                en: 'Washed Vegetables'
-            },
-            'Dried Lettuce': {
-                he: 'חסה יבשה',
-                en: 'Dried Lettuce'
-            },
-            'Equipment': {
-                he: 'ציוד',
-                en: 'Equipment'
-            },
-            'Takeaway Boxes': {
-                he: 'קופסאות טייק-אווי',
-                en: 'Takeaway Boxes'
-            },
-            'Lids': {
-                he: 'מכסים',
-                en: 'Lids'
-            },
-            'Cutlery': {
-                he: 'סכו"ם',
-                en: 'Cutlery'
-            },
-            'Napkins': {
-                he: 'מפיות',
-                en: 'Napkins'
-            },
-            'Delivery Bags': {
-                he: 'שקיות משלוח',
-                en: 'Delivery Bags'
-            },
-            'Stickers': {
-                he: 'מדבקות',
-                en: 'Stickers'
-            },
-            'Gloves': {
-                he: 'כפפות',
-                en: 'Gloves'
-            },
-            'Plastic Wrap': {
-                he: 'ניילון נצמד',
-                en: 'Plastic Wrap'
-            },
-            'Baking Paper': {
-                he: 'נייר אפייה',
-                en: 'Baking Paper'
-            },
-            'In Stock': {
-                he: '✓ בסדר',
-                en: '✓ OK'
-            },
-            'Low': {
-                he: '⚠️ נמוך',
-                en: '⚠️ Low'
-            },
-            'Out': {
-                he: '⚠️ נגמר',
-                en: '⚠️ Out'
-            },
-            'In Stock': {
-                he: 'בעמדה:',
-                en: 'In Stock:'
-            },
-            'Order Qty': {
-                he: 'הזמנה:',
-                en: 'Order Qty:'
-            },
-            'Order': {
-                he: 'הזמן',
-                en: 'Order'
-            },
-            'Ordered': {
-                he: 'הוזמן:',
-                en: 'Ordered:'
-            }
+            'Vegetables & Herbs': { he: 'ירקות ועשבי תיבול', en: 'Vegetables & Herbs' },
+            'Caesar Hearts': { he: 'לבבות קיסר', en: 'Caesar Hearts' },
+            'Cherry Tomatoes': { he: 'עגבניות שרי', en: 'Cherry Tomatoes' },
+            'Sauce Tomatoes': { he: 'עגבניות לרוטב', en: 'Sauce Tomatoes' },
+            'Red Onion': { he: 'בצל סגול', en: 'Red Onion' },
+            'Fresh Garlic': { he: 'שום טרי', en: 'Fresh Garlic' },
+            'Garlic Confit': { he: 'שום קונפי', en: 'Garlic Confit' },
+            'Basil': { he: 'בזיליקום', en: 'Basil' },
+            'Arugula': { he: 'רוקט', en: 'Arugula' },
+            'Parsley': { he: 'פטרוזיליה', en: 'Parsley' },
+            'Red Chili': { he: 'צ\'ילי אדום', en: 'Red Chili' },
+            'Jalapeño': { he: 'חלפיניו', en: 'Jalapeño' },
+            'Lemons': { he: 'לימונים', en: 'Lemons' },
+            'Antipasti & Toppings': { he: 'אנטיפסטי ותוספות', en: 'Antipasti & Toppings' },
+            'Artichoke alla Romana': { he: 'ארטישוק א-לה רומאנה', en: 'Artichoke alla Romana' },
+            'Kalamata Olives': { he: 'זיתי קלמטה', en: 'Kalamata Olives' },
+            'Croutons': { he: 'קרוטונים', en: 'Croutons' },
+            'Focaccia': { he: 'פוקצ\'ה', en: 'Focaccia' },
+            'Cheeses': { he: 'גבינות', en: 'Cheeses' },
+            'Fresh Mozzarella': { he: 'מוצרלה פרסקה', en: 'Fresh Mozzarella' },
+            'Burrata': { he: 'בוראטה', en: 'Burrata' },
+            'Parmigiano Reggiano': { he: 'פרמז\'ן רג\'אנו', en: 'Parmigiano Reggiano' },
+            'Ricotta': { he: 'ריקוטה', en: 'Ricotta' },
+            'Mascarpone': { he: 'מסקרפונה', en: 'Mascarpone' },
+            'Mushrooms': { he: 'פטריות', en: 'Mushrooms' },
+            'Champignon': { he: 'שמפיניון', en: 'Champignon' },
+            'Portobello': { he: 'פורטובלו', en: 'Portobello' },
+            'Pastas': { he: 'פסטות', en: 'Pastas' },
+            'Spaghetti': { he: 'ספגטי', en: 'Spaghetti' },
+            'Fettuccine': { he: 'פטוצ\'יני', en: 'Fettuccine' },
+            'Rigatoni': { he: 'ריגטוני', en: 'Rigatoni' },
+            'Busiate': { he: 'בוסיאטה', en: 'Busiate' },
+            'Radiatore': { he: 'רדיאטורה', en: 'Radiatore' },
+            'Gnocchi': { he: 'ניוקי', en: 'Gnocchi' },
+            'Ravioli Beets Mascarpone': { he: 'אנילוטי סלק ומסקרפונה', en: 'Ravioli Beets Mascarpone' },
+            'Ravioli Mushrooms Ricotta': { he: 'אנילוטי פטריות וריקוטה', en: 'Ravioli Mushrooms Ricotta' },
+            'Gluten-Free Pasta': { he: 'פסטה ללא גלוטן', en: 'Gluten-Free Pasta' },
+            'Sauces': { he: 'רטבים', en: 'Sauces' },
+            'Napoli': { he: 'נפולי', en: 'Napoli' },
+            'Cream': { he: 'שמנת', en: 'Cream' },
+            'Rosa': { he: 'רוזה', en: 'Rosa' },
+            'Arbiata': { he: 'ארביאטה', en: 'Arbiata' },
+            'Truffle': { he: 'טרטופו', en: 'Truffle' },
+            'Pesto Cream': { he: 'שמנת פסטו', en: 'Pesto Cream' },
+            'Butter Za\'atar Pine Nuts': { he: 'חמאה, זעתר וערמונים', en: 'Butter Za\'atar Pine Nuts' },
+            'Pizza': { he: 'פיצה', en: 'Pizza' },
+            'Dough Balls': { he: 'כדורי בצק', en: 'Dough Balls' },
+            'Pizza Tomato Sauce': { he: 'רוטב עגבניות לפיצה', en: 'Pizza Tomato Sauce' },
+            'Pizza Mozzarella': { he: 'מוצרלה לפיצה', en: 'Pizza Mozzarella' },
+            'Pizza Parmesan': { he: 'פרמז\'ן לפיצה', en: 'Pizza Parmesan' },
+            'Pantry Items': { he: 'מוצרי מזווה', en: 'Pantry Items' },
+            'Olive Oil': { he: 'שמן זית', en: 'Olive Oil' },
+            'Salt': { he: 'מלח', en: 'Salt' },
+            'Black Pepper': { he: 'פלפל שחור', en: 'Black Pepper' },
+            'Dried Oregano': { he: 'אורגנו יבש', en: 'Dried Oregano' },
+            'Chili Flakes': { he: 'פתיתי צ\'ילי', en: 'Chili Flakes' },
+            'Nutmeg': { he: 'אגוז מוסקט', en: 'Nutmeg' },
+            'Cumin': { he: 'כמהין', en: 'Cumin' },
+            'Prep': { he: 'הכנות (Prep)', en: 'Prep' },
+            'Ready Napoli': { he: 'רוטב נפולי מוכן', en: 'Ready Napoli' },
+            'Ready Cream Sauce': { he: 'רוטב שמנת מוכן', en: 'Ready Cream Sauce' },
+            'Ready Rosa': { he: 'רוטב רוזה מוכן', en: 'Ready Rosa' },
+            'Ready Arbiata': { he: 'רוטב ארביאטה מוכן', en: 'Ready Arbiata' },
+            'Ready Truffle': { he: 'רוטב טרטופו מוכן', en: 'Ready Truffle' },
+            'Ready Pesto Cream': { he: 'שמנת פסטו מוכנה', en: 'Ready Pesto Cream' },
+            'Ready Butter & Arugula': { he: 'חמאה וערמונים מוכנים', en: 'Ready Butter & Arugula' },
+            'Ready Garlic Confit': { he: 'שום קונפי מוכן', en: 'Ready Garlic Confit' },
+            'Grated Parmesan': { he: 'פרמז\'ן מגורר', en: 'Grated Parmesan' },
+            'Sliced Mozzarella': { he: 'מוצרלה חתוכה', en: 'Sliced Mozzarella' },
+            'Ready Burrata': { he: 'בוראטה מוכנה', en: 'Ready Burrata' },
+            'Washed Vegetables': { he: 'ירקות חתוכים', en: 'Washed Vegetables' },
+            'Dried Lettuce': { he: 'חסה יבשה', en: 'Dried Lettuce' },
+            'Equipment': { he: 'ציוד', en: 'Equipment' },
+            'Takeaway Boxes': { he: 'קופסאות טייק-אווי', en: 'Takeaway Boxes' },
+            'Lids': { he: 'מכסים', en: 'Lids' },
+            'Cutlery': { he: 'סכו"ם', en: 'Cutlery' },
+            'Napkins': { he: 'מפיות', en: 'Napkins' },
+            'Delivery Bags': { he: 'שקיות משלוח', en: 'Delivery Bags' },
+            'Stickers': { he: 'מדבקות', en: 'Stickers' },
+            'Gloves': { he: 'כפפות', en: 'Gloves' },
+            'Plastic Wrap': { he: 'ניילון נצמד', en: 'Plastic Wrap' },
+            'Baking Paper': { he: 'נייר אפייה', en: 'Baking Paper' },
+            'In Stock': { he: '✓ בסדר', en: '✓ OK' },
+            'Low': { he: '⚠️ נמוך', en: '⚠️ Low' },
+            'Out': { he: '⚠️ נגמר', en: '⚠️ Out' },
+            'Stock': { he: 'בעמדה:', en: 'Stock:' },
+            'Order Qty': { he: 'הזמנה:', en: 'Order:' },
+            'Order': { he: 'הזמן', en: 'Order' },
+            'Ordered': { he: 'הוזמן:', en: 'Ordered:' }
         };
 
         const inventory = {
-            'Vegetables & Herbs': [
-                'Caesar Hearts',
-                'Cherry Tomatoes',
-                'Sauce Tomatoes',
-                'Red Onion',
-                'Fresh Garlic',
-                'Garlic Confit',
-                'Basil',
-                'Arugula',
-                'Parsley',
-                'Red Chili',
-                'Jalapeño',
-                'Lemons'
-            ],
-            'Antipasti & Toppings': [
-                'Artichoke alla Romana',
-                'Kalamata Olives',
-                'Croutons',
-                'Focaccia'
-            ],
-            'Cheeses': [
-                'Fresh Mozzarella',
-                'Burrata',
-                'Parmigiano Reggiano',
-                'Ricotta',
-                'Mascarpone'
-            ],
-            'Mushrooms': [
-                'Champignon',
-                'Portobello'
-            ],
-            'Pastas': [
-                'Spaghetti',
-                'Fettuccine',
-                'Rigatoni',
-                'Busiate',
-                'Radiatore',
-                'Gnocchi',
-                'Ravioli Beets Mascarpone',
-                'Ravioli Mushrooms Ricotta',
-                'Gluten-Free Pasta'
-            ],
-            'Sauces': [
-                'Napoli',
-                'Cream',
-                'Rosa',
-                'Arbiata',
-                'Truffle',
-                'Pesto Cream',
-                'Butter Za\'atar Pine Nuts'
-            ],
-            'Pizza': [
-                'Dough Balls',
-                'Pizza Tomato Sauce',
-                'Pizza Mozzarella',
-                'Pizza Parmesan'
-            ],
-            'Pantry Items': [
-                'Olive Oil',
-                'Salt',
-                'Black Pepper',
-                'Dried Oregano',
-                'Chili Flakes',
-                'Nutmeg',
-                'Cumin'
-            ],
-            'Prep': [
-                'Ready Napoli',
-                'Ready Cream Sauce',
-                'Ready Rosa',
-                'Ready Arbiata',
-                'Ready Truffle',
-                'Ready Pesto Cream',
-                'Ready Butter & Arugula',
-                'Ready Garlic Confit',
-                'Grated Parmesan',
-                'Sliced Mozzarella',
-                'Ready Burrata',
-                'Washed Vegetables',
-                'Dried Lettuce'
-            ],
-            'Equipment': [
-                'Takeaway Boxes',
-                'Lids',
-                'Cutlery',
-                'Napkins',
-                'Delivery Bags',
-                'Stickers',
-                'Gloves',
-                'Plastic Wrap',
-                'Baking Paper'
-            ]
+            'Vegetables & Herbs': ['Caesar Hearts', 'Cherry Tomatoes', 'Sauce Tomatoes', 'Red Onion', 'Fresh Garlic', 'Garlic Confit', 'Basil', 'Arugula', 'Parsley', 'Red Chili', 'Jalapeño', 'Lemons'],
+            'Antipasti & Toppings': ['Artichoke alla Romana', 'Kalamata Olives', 'Croutons', 'Focaccia'],
+            'Cheeses': ['Fresh Mozzarella', 'Burrata', 'Parmigiano Reggiano', 'Ricotta', 'Mascarpone'],
+            'Mushrooms': ['Champignon', 'Portobello'],
+            'Pastas': ['Spaghetti', 'Fettuccine', 'Rigatoni', 'Busiate', 'Radiatore', 'Gnocchi', 'Ravioli Beets Mascarpone', 'Ravioli Mushrooms Ricotta', 'Gluten-Free Pasta'],
+            'Sauces': ['Napoli', 'Cream', 'Rosa', 'Arbiata', 'Truffle', 'Pesto Cream', 'Butter Za\'atar Pine Nuts'],
+            'Pizza': ['Dough Balls', 'Pizza Tomato Sauce', 'Pizza Mozzarella', 'Pizza Parmesan'],
+            'Pantry Items': ['Olive Oil', 'Salt', 'Black Pepper', 'Dried Oregano', 'Chili Flakes', 'Nutmeg', 'Cumin'],
+            'Prep': ['Ready Napoli', 'Ready Cream Sauce', 'Ready Rosa', 'Ready Arbiata', 'Ready Truffle', 'Ready Pesto Cream', 'Ready Butter & Arugula', 'Ready Garlic Confit', 'Grated Parmesan', 'Sliced Mozzarella', 'Ready Burrata', 'Washed Vegetables', 'Dried Lettuce'],
+            'Equipment': ['Takeaway Boxes', 'Lids', 'Cutlery', 'Napkins', 'Delivery Bags', 'Stickers', 'Gloves', 'Plastic Wrap', 'Baking Paper']
         };
 
+        let supabase;
         let items = {};
         let currentLang = 'he';
 
-        function translate(key) {
-            if (translations[key]) {
-                return translations[key][currentLang] || key;
+        async function init() {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                await loadFromSupabase();
+                setupRealtimeSync();
+                updateStatusBar(true);
+            } catch (error) {
+                console.error('Supabase error:', error);
+                updateStatusBar(false);
             }
-            return key;
-        }
-
-        function setLanguage(lang) {
-            currentLang = lang;
-            document.documentElement.lang = lang;
-            document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
-            
-            // Update language buttons
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
             render();
         }
 
-        function init() {
-            loadFromStorage();
-            render();
-        }
+        async function loadFromSupabase() {
+            const { data, error } = await supabase.from('restaurant_items').select('*');
+            if (error) throw error;
 
-        function loadFromStorage() {
-            const stored = localStorage.getItem('restaurantInventory');
-            if (stored) {
-                items = JSON.parse(stored);
-            } else {
+            if (data.length === 0) {
+                // Initialize with all items
                 for (const [category, itemList] of Object.entries(inventory)) {
-                    for (const item of itemList) {
-                        items[item] = {
-                            category,
+                    for (const itemName of itemList) {
+                        await supabase.from('restaurant_items').insert({
+                            name: itemName,
+                            category: category,
                             current: 0
-                        };
+                        });
                     }
                 }
-                saveToStorage();
+            }
+
+            // Load into memory
+            for (const [category, itemList] of Object.entries(inventory)) {
+                for (const itemName of itemList) {
+                    items[itemName] = { category, current: 0 };
+                }
+            }
+
+            if (data && data.length > 0) {
+                data.forEach(row => {
+                    if (items[row.name]) {
+                        items[row.name].current = row.current;
+                    }
+                });
             }
         }
 
-        function saveToStorage() {
-            localStorage.setItem('restaurantInventory', JSON.stringify(items));
+        function setupRealtimeSync() {
+            supabase.channel('restaurant_items_realtime')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'restaurant_items'
+                }, (payload) => {
+                    if (payload.new) {
+                        const name = payload.new.name;
+                        if (items[name]) {
+                            items[name].current = payload.new.current;
+                            render();
+                        }
+                    }
+                }).subscribe();
         }
 
-        function updateQuantity(itemName, value) {
-            items[itemName].current = parseInt(value) || 0;
-            saveToStorage();
-            render();
+        async function updateQuantity(itemName, value) {
+            const newValue = parseInt(value) || 0;
+            items[itemName].current = newValue;
+            
+            await supabase.from('restaurant_items').update({
+                current: newValue
+            }).eq('name', itemName);
         }
 
-        function placeOrder(itemName, quantity) {
+        async function placeOrder(itemName, quantity) {
             const qty = parseInt(quantity) || 1;
             const newQty = items[itemName].current - qty;
             
@@ -767,15 +456,17 @@
             }
 
             items[itemName].current = newQty;
-            saveToStorage();
             
+            await supabase.from('restaurant_items').update({
+                current: newQty
+            }).eq('name', itemName);
+
             const message = currentLang === 'he' 
                 ? `הוזמן: ${qty} של ${itemName}` 
                 : `Ordered: ${qty} of ${itemName}`;
             addOrderLog(message);
             
             document.querySelector(`input[data-order-${itemName}]`).value = '1';
-            render();
         }
 
         function addOrderLog(message) {
@@ -789,6 +480,35 @@
             render();
         }
 
+        function translate(key) {
+            if (translations[key]) {
+                return translations[key][currentLang] || key;
+            }
+            return key;
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+            
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            render();
+        }
+
+        function updateStatusBar(connected) {
+            const bar = document.getElementById('statusBar');
+            if (connected) {
+                bar.className = 'status-bar';
+                bar.textContent = currentLang === 'he' ? '✅ מחובר לשרת' : '✅ Connected to server';
+            } else {
+                bar.className = 'status-bar error';
+                bar.textContent = currentLang === 'he' ? '❌ לא מחובר לשרת' : '❌ Not connected to server';
+            }
+        }
+
         function render() {
             renderCategories();
             renderOrderLog();
@@ -798,16 +518,11 @@
             let html = '';
             
             for (const [category, itemList] of Object.entries(inventory)) {
-                html += `
-                    <div class="category">
-                        <div class="category-title">${translate(category)}</div>
-                `;
+                html += `<div class="category"><div class="category-title">${translate(category)}</div>`;
 
                 for (const itemName of itemList) {
-                    const item = items[itemName];
-                    const current = item.current;
+                    const current = items[itemName]?.current || 0;
                     let status = 'ok';
-                    
                     if (current === 0) status = 'empty';
                     else if (current < 5) status = 'low';
 
@@ -821,7 +536,7 @@
                         <div class="item">
                             <div class="item-name">${translate(itemName)}</div>
                             <div class="item-row">
-                                <label>${translate('In Stock')}:</label>
+                                <label>${translate('Stock')}:</label>
                                 <input type="number" value="${current}" min="0" 
                                        onchange="updateQuantity('${itemName}', this.value)">
                             </div>
