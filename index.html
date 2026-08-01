@@ -353,8 +353,7 @@
             'Out': { he: '⚠️ נגמר', en: '⚠️ Out' },
             'Stock': { he: 'בעמדה:', en: 'Stock:' },
             'Order Qty': { he: 'הזמנה:', en: 'Order:' },
-            'Order': { he: 'הזמן', en: 'Order' },
-            'Ordered': { he: 'הוזמן:', en: 'Ordered:' }
+            'Order': { he: 'הזמן', en: 'Order' }
         };
 
         const inventory = {
@@ -392,7 +391,6 @@
             if (error) throw error;
 
             if (data.length === 0) {
-                // Initialize with all items
                 for (const [category, itemList] of Object.entries(inventory)) {
                     for (const itemName of itemList) {
                         await supabase.from('restaurant_items').insert({
@@ -404,7 +402,6 @@
                 }
             }
 
-            // Load into memory
             for (const [category, itemList] of Object.entries(inventory)) {
                 for (const itemName of itemList) {
                     items[itemName] = { category, current: 0 };
@@ -441,32 +438,49 @@
             const newValue = parseInt(value) || 0;
             items[itemName].current = newValue;
             
-            await supabase.from('restaurant_items').update({
-                current: newValue
-            }).eq('name', itemName);
+            try {
+                await supabase.from('restaurant_items').update({
+                    current: newValue
+                }).eq('name', itemName);
+            } catch (error) {
+                console.error('Update error:', error);
+            }
         }
 
-        async function placeOrder(itemName, quantity) {
-            const qty = parseInt(quantity) || 1;
-            const newQty = items[itemName].current - qty;
+        async function placeOrder(itemName, orderQtyInputId) {
+            const orderInput = document.querySelector(`#${orderQtyInputId}`);
+            const qty = parseInt(orderInput.value) || 1;
+            const currentQty = items[itemName].current;
+            const newQty = currentQty - qty;
             
             if (newQty < 0) {
                 alert(currentLang === 'he' ? `אין מספיק ${itemName}` : `Not enough ${itemName}`);
                 return;
             }
 
+            // Update local state
             items[itemName].current = newQty;
             
-            await supabase.from('restaurant_items').update({
-                current: newQty
-            }).eq('name', itemName);
+            // Update Supabase
+            try {
+                await supabase.from('restaurant_items').update({
+                    current: newQty
+                }).eq('name', itemName);
+            } catch (error) {
+                console.error('Order error:', error);
+            }
 
+            // Log the order - THIS HAPPENS IMMEDIATELY
             const message = currentLang === 'he' 
                 ? `הוזמן: ${qty} של ${itemName}` 
                 : `Ordered: ${qty} of ${itemName}`;
             addOrderLog(message);
             
-            document.querySelector(`input[data-order-${itemName}]`).value = '1';
+            // Reset input
+            orderInput.value = '1';
+            
+            // Update UI
+            render();
         }
 
         function addOrderLog(message) {
@@ -477,7 +491,7 @@
             });
             logs.splice(50);
             localStorage.setItem('orderLogs', JSON.stringify(logs));
-            render();
+            renderOrderLog();
         }
 
         function translate(key) {
@@ -516,6 +530,7 @@
 
         function renderCategories() {
             let html = '';
+            let itemCounter = 0;
             
             for (const [category, itemList] of Object.entries(inventory)) {
                 html += `<div class="category"><div class="category-title">${translate(category)}</div>`;
@@ -532,6 +547,9 @@
                         'empty': translate('Out')
                     };
 
+                    const inputId = `order-input-${itemCounter}`;
+                    itemCounter++;
+
                     html += `
                         <div class="item">
                             <div class="item-name">${translate(itemName)}</div>
@@ -542,8 +560,8 @@
                             </div>
                             <div class="item-row">
                                 <label>${translate('Order Qty')}:</label>
-                                <input type="number" value="1" min="1" data-order-${itemName}>
-                                <button onclick="placeOrder('${itemName}', document.querySelector('input[data-order-${itemName}]').value)">${translate('Order')}</button>
+                                <input type="number" id="${inputId}" value="1" min="1">
+                                <button onclick="placeOrder('${itemName}', '${inputId}')">${translate('Order')}</button>
                             </div>
                             <div class="status ${status}">${statusMap[status]}</div>
                         </div>
